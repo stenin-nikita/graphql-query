@@ -1,0 +1,249 @@
+<?php
+$meta #
+#semval($) $this->semValue
+#semval($,%t) $this->semValue
+#semval(%n) $this->semStack[$stackPos-(%l-%n)]
+#semval(%n,%t) $this->semStack[$stackPos-(%l-%n)]
+/**
+ * This file is part of Stenin/GraphQL package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+declare(strict_types=1);
+
+namespace Stenin\GraphQLQuery;
+
+use Railt\Compiler\Lexer;
+use Stenin\GraphQLQuery\Ast\Document;
+use Stenin\GraphQLQuery\Ast\OperationDefinition;
+use Stenin\GraphQLQuery\Ast\Field;
+use Stenin\GraphQLQuery\Ast\Argument;
+use Stenin\GraphQLQuery\Ast\Directive;
+use Stenin\GraphQLQuery\Ast\Variable;
+use Stenin\GraphQLQuery\Ast\FragmentDefinition;
+use Stenin\GraphQLQuery\Ast\FragmentSpread;
+use Stenin\GraphQLQuery\Ast\InlineFragment;
+
+#include;
+
+/**
+ * This is an automatically GENERATED file, which should not be manually edited.
+ *
+ * Class #(-p)
+ */
+class #(-p) extends AbstractParser
+{
+    /**
+     * @var int
+     */
+    const SYMBOL_NONE = -1;
+
+    /**
+     * @var int
+     */
+    protected $tokenToSymbolMapSize = #(YYMAXLEX);
+
+    /**
+     * @var int
+     */
+    protected $actionTableSize = #(YYLAST);
+
+    /**
+     * @var int
+     */
+    protected $gotoTableSize = #(YYGLAST);
+
+    /**
+     * @var int
+     */
+    protected $invalidSymbol = #(YYBADCH);
+
+    /**
+     * @var int
+     */
+    protected $errorSymbol = #(YYINTERRTOK);
+
+    /**
+     * @var int
+     */
+    protected $defaultAction = #(YYDEFAULT);
+
+    /**
+     * @var int
+     */
+    protected $unexpectedTokenRule = #(YYUNEXPECTED);
+
+    /**
+     * @var int
+     */
+    protected $YY2TBLSTATE = #(YY2TBLSTATE);
+
+    /**
+     * @var int
+     */
+    protected $numNonLeafStates = #(YYNLSTATES);
+
+    /**
+     * @var array
+     */
+    protected $symbolToName = [
+        #listvar terminals
+    ];
+
+    /**
+     * @var array
+     */
+    protected $tokenToSymbol = [
+        #listvar yytranslate
+    ];
+
+    /**
+     * @var array
+     */
+    protected $action = [
+        #listvar yyaction
+    ];
+
+    /**
+     * @var array
+     */
+    protected $actionCheck = [
+        #listvar yycheck
+    ];
+
+    /**
+     * @var array
+     */
+    protected $actionBase = [
+        #listvar yybase
+    ];
+
+    /**
+     * @var array
+     */
+    protected $actionDefault = [
+        #listvar yydefault
+    ];
+
+    /**
+     * @var array
+     */
+    protected $goto = [
+        #listvar yygoto
+    ];
+
+    /**
+     * @var array
+     */
+    protected $gotoCheck = [
+        #listvar yygcheck
+    ];
+
+    /**
+     * @var array
+     */
+    protected $gotoBase = [
+        #listvar yygbase
+    ];
+
+    /**
+     * @var array
+     */
+    protected $gotoDefault = [
+        #listvar yygdefault
+    ];
+
+    /**
+     * @var array
+     */
+    protected $ruleToNonTerminal = [
+        #listvar yylhs
+    ];
+
+    /**
+     * @var array
+     */
+    protected $ruleToLength = [
+        #listvar yylen
+    ];
+
+    /**
+     * @var array
+     */
+    protected $productions = array(
+        #production-strings;
+    );
+
+    /**
+     * @var array
+     */
+    protected $tokens = [
+#tokenval
+        '%s' => %n,
+#endtokenval
+    ];
+
+    /**
+     * @var bool
+     */
+    protected $init = false;
+
+    /**
+     * @var Lexer
+     */
+    protected $lexer;
+
+    /**
+     * @return void
+     */
+    protected function initReduceCallbacks() {
+        $this->reduceCallbacks = [
+#reduce
+            %n => function ($stackPos) {
+                %b
+            },
+#noact
+            %n => function ($stackPos) {
+                $this->semValue = $this->semStack[$stackPos];
+            },
+#endreduce
+        ];
+    }
+
+    /**
+     * @return int
+     * @throws \Exception
+     */
+    protected function lex(): int
+    {
+        if (! $this->init) {
+            $this->init = true;
+            $lexer = new \Railt\Compiler\Lexer($this->code, $this->_tokens);
+            $this->lexer = $lexer->getIterator();
+        }
+
+        $current = $this->lexer->current();
+
+        if (isset($this->tokens[$current['token']])) {
+            $this->tokenValue = $current['value'];
+            $ret = $this->tokens[$current['token']];
+        } elseif ($current['token'] === 'EOF') {
+            $this->tokenValue = "\0";
+            $ret = 0;
+        } else {
+            throw new \Exception('Unexpected token');
+        }
+
+        $this->lexer->next();
+
+        return $ret;
+    }
+
+    private function append($first, $second)
+    {
+        $first[] = $second;
+        return $first;
+    }
+}
+#tailcode;

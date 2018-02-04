@@ -1,0 +1,16 @@
+{
+    "name": "stenin-nikita/graphql-query",
+    "description": "GraphQL query parser based on Yacc",
+    "type": "library",
+    "require": {
+        "railt/compiler": "^1.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nikita Stenin",
+            "email": "stenin.nikita@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}

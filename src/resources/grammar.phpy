@@ -1,0 +1,289 @@
+%token T_QUERY
+%token T_MUTATION
+%token T_SUBSCRIPTION
+%token T_FRAGMENT
+%token T_ON
+%token T_NON_NULL
+%token T_VAR
+%token T_PARENTHESIS_OPEN
+%token T_PARENTHESIS_CLOSE
+%token T_THREE_DOTS
+%token T_COLON
+%token T_EQUAL
+%token T_DIRECTIVE_AT
+%token T_BRACKET_OPEN
+%token T_BRACKET_CLOSE
+%token T_BRACE_OPEN
+%token T_BRACE_CLOSE
+%token T_ON
+%token T_NUMBER_VALUE
+%token T_BOOL_TRUE
+%token T_BOOL_FALSE
+%token T_NULL
+%token T_MULTILINE_STRING
+%token T_STRING
+%token T_NAME
+
+%%
+
+start
+    : Document
+    ;
+
+Document
+    : Definitions { $$ = new Document($1); }
+    ;
+
+Definitions
+    : { $$ = []; }
+    | Definitions Definition { $$ = $this->append($1, $2); }
+    ;
+
+Definition
+    : OperationDefinition { $$ = $1; }
+    | FragmentDefinition { $$ = $1; }
+
+OperationDefinition
+    : SelectionSet { $$ = new OperationDefinition('query', '', $1); }
+    | OperationType NameOpt SelectionSet { $$ = new OperationDefinition($1, $2, $3); }
+    | OperationType NameOpt VariableDefinitions SelectionSet { $$ = new OperationDefinition($1, $2, $4, $3); }
+    | OperationType NameOpt Directives SelectionSet { $$ = new OperationDefinition($1, $2, $4, null, $3); }
+    | OperationType NameOpt VariableDefinitions Directives SelectionSet { $$ = new OperationDefinition($1, $2, $5, $3, $4); }
+    ;
+
+OperationType
+    : T_QUERY
+    | T_MUTATION
+    | T_SUBSCRIPTION
+    ;
+
+/**
+ * SelectionSet
+ */
+
+SelectionSet
+    : T_BRACE_OPEN SelectionList T_BRACE_CLOSE { $$ = $2; }
+    ;
+
+SelectionSetOpt
+    : { $$ = []; }
+    | SelectionSet
+    ;
+
+SelectionList
+    : { $$ = []; }
+    | SelectionList Selection { $1[] = $2; $$ = $1; }
+    ;
+
+Selection
+    : Field { $$ = $1; }
+    | FragmentSpread { $$ = $1; }
+    | InlineFragment { $$ = $1; }
+    ;
+
+/**
+ * Field
+ */
+
+Field
+    : Name ArgumentsOpt DirectivesOpt SelectionSetOpt { $$ = new Field($1, $2, $3, $4); }
+    | Alias Name ArgumentsOpt DirectivesOpt SelectionSetOpt { $$ = new Field($2, $3, $4, $5, $1); }
+    ;
+
+Alias
+    : Name T_COLON { $$ = $1; }
+    ;
+
+/**
+ * Arguments
+ */
+
+Arguments
+    : T_PARENTHESIS_OPEN ArgumentsList T_PARENTHESIS_CLOSE { $$ = $2; }
+    ;
+
+ArgumentsOpt
+    : { $$ = []; }
+    | Arguments
+    ;
+
+ArgumentsList
+    : { $$ = []; }
+    | ArgumentsList Argument { $1[$2->getName()] = $2; $$ = $1; }
+    ;
+
+Argument
+    : Name T_COLON Value { $$ = new Argument($1, $3); }
+    ;
+
+/**
+ * Fragments
+ */
+
+FragmentSpread
+    : T_THREE_DOTS FragmentName DirectivesOpt { $$ = new FragmentSpread($2, $3); }
+    ;
+
+InlineFragment
+    : T_THREE_DOTS DirectivesOpt SelectionSet { $$ = new InlineFragment($3, $2); }
+    | T_THREE_DOTS TypeCondition DirectivesOpt SelectionSet { $$ = new InlineFragment($4, $3, $2); }
+    ;
+
+FragmentName
+    : Name
+    ;
+
+TypeCondition
+    : T_ON NamedType { $$ = $2; }
+    ;
+
+FragmentDefinition
+    : T_FRAGMENT FragmentName TypeCondition DirectivesOpt SelectionSet { $$ = new FragmentDefinition($2, $3, $5, $4); }
+    ;
+
+/**
+ * Values
+ */
+
+Value
+    : Variable
+    | Number
+    | String
+    | Boolean
+    | Nullable
+    | Enum
+    | List
+    | Object
+    ;
+
+Number
+    : T_NUMBER_VALUE { $$ = $1 + 0; }
+    ;
+
+Boolean
+    : T_BOOL_TRUE { $$ = true; }
+    | T_BOOL_FALSE { $$ = false; }
+    ;
+
+String
+    : T_MULTILINE_STRING { $$ = \mb_substr($1, 3, -3); }
+    | T_STRING { $$ = \mb_substr($1, 1, -1); }
+    ;
+
+Nullable
+    : T_NULL { $$ = null; }
+    ;
+
+Enum
+    : Name { $$ = $1; }
+    | Enum Name { $$ = $2; }
+    ;
+
+/**
+ * List Value
+ */
+
+List
+    : T_BRACKET_OPEN ValueList T_BRACKET_CLOSE { $$ = $2; }
+    ;
+
+ValueList
+    : { $$ = []; }
+    | ValueList Value { $1[] = $2; $$ = $1; }
+    ;
+
+/**
+ * Object Value
+ */
+
+Object
+    : T_BRACE_OPEN ObjectFieldList T_BRACE_CLOSE { $$ = $2; }
+    ;
+
+ObjectFieldList
+    : { $$ = []; }
+    | ObjectFieldList ObjectField { $1[$2[0]] = $2[1]; $$ = $1; }
+
+ObjectField
+    : Name T_COLON Value { $$ = [$1, $3]; }
+    ;
+
+/**
+ * Variables
+ */
+
+Variable
+    : T_VAR Name { $$ = $1.$2; }
+    ;
+
+VariableDefinitions
+    : T_PARENTHESIS_OPEN VariableDefinitionList T_PARENTHESIS_CLOSE { $$ = $2; }
+    ;
+
+VariableDefinitionList
+    : { $$ = []; }
+    | VariableDefinitionList VariableDefinition { $1[] = $2; $$ = $1; }
+
+VariableDefinition
+    : Variable T_COLON Type DefaultValue { $$ = new Variable($1, $3, $4); }
+    ;
+
+DefaultValue
+    : { $$ = null; }
+    | T_EQUAL Value { $$ = $2; }
+    ;
+
+/**
+ * Types
+ */
+
+Type
+    : NamedType
+    | ListType
+    | NonNullType
+    ;
+
+NamedType
+    : Name
+    ;
+
+ListType
+    : T_BRACKET_OPEN Type T_BRACKET_CLOSE { $$ = $2; }
+    ;
+
+NonNullType
+    : NamedType T_NON_NULL { $$ = $1; }
+    | ListType T_NON_NULL { $$ = $1; }
+    ;
+
+/**
+ * Directives
+ */
+
+Directives
+    : DirectivesOpt Directive { $1[] = $2; $$ = $1; }
+    ;
+
+DirectivesOpt
+    : { $$ = []; }
+    | DirectivesOpt Directive { $1[] = $2; $$ = $1; }
+    ;
+
+Directive
+    : T_DIRECTIVE_AT Name ArgumentsOpt { $1[] = $2; $$ = $1; }
+    ;
+
+/**
+ * Name
+ */
+
+Name
+    : T_NAME { $$ = $1; }
+    ;
+
+NameOpt
+    : { $$ = ''; }
+    | Name { $$ = $1; }
+    ;
+
+%%
