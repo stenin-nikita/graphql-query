@@ -36,7 +36,7 @@ Document
 
 Definitions
     : { $$ = []; }
-    | Definitions Definition { $$ = $this->append($1, $2); }
+    | Definitions Definition { $1[] = $2; $$ = $1; }
     ;
 
 Definition

@@ -211,6 +211,8 @@ class #(-p) extends AbstractParser
         ];
     }
 
+    private $currentToken;
+
     /**
      * @return int
      * @throws \Exception
@@ -223,7 +225,7 @@ class #(-p) extends AbstractParser
             $this->lexer = $lexer->getIterator();
         }
 
-        $current = $this->lexer->current();
+        $current = $this->currentToken = $this->lexer->current();
 
         if (isset($this->tokens[$current['token']])) {
             $this->tokenValue = $current['value'];
@@ -238,12 +240,6 @@ class #(-p) extends AbstractParser
         $this->lexer->next();
 
         return $ret;
-    }
-
-    private function append($first, $second)
-    {
-        $first[] = $second;
-        return $first;
     }
 }
 #tailcode;

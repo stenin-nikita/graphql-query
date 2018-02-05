@@ -414,7 +414,7 @@ class QueryParser extends AbstractParser
 /* YY:38 */                 $this->semValue = []; 
             },
             4 => function ($stackPos) {
-/* YY:39 */                 $this->semValue = $this->append($this->semStack[$stackPos-(2-1)], $this->semStack[$stackPos-(2-2)]); 
+/* YY:39 */                 $this->semStack[$stackPos-(2-1)][] = $this->semStack[$stackPos-(2-2)]; $this->semValue = $this->semStack[$stackPos-(2-1)]; 
             },
             5 => function ($stackPos) {
 /* YY:43 */                 $this->semValue = $this->semStack[$stackPos-(1-1)]; 
@@ -650,6 +650,8 @@ class QueryParser extends AbstractParser
 /* YY:31 */        ];
     }
 
+    private $currentToken;
+
     /**
      * @return int
      * @throws \Exception
@@ -662,7 +664,7 @@ class QueryParser extends AbstractParser
             $this->lexer = $lexer->getIterator();
         }
 
-        $current = $this->lexer->current();
+        $current = $this->currentToken = $this->lexer->current();
 
         if (isset($this->tokens[$current['token']])) {
             $this->tokenValue = $current['value'];
@@ -677,12 +679,6 @@ class QueryParser extends AbstractParser
         $this->lexer->next();
 
         return $ret;
-    }
-
-    private function append($first, $second)
-    {
-        $first[] = $second;
-        return $first;
     }
 }
 /* YY:31 */
