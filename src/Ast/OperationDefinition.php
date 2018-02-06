@@ -25,7 +25,7 @@ class OperationDefinition
     private $name;
 
     /**
-     * @var array
+     * @var SelectionSet
      */
     private $selectionSet;
 
@@ -43,17 +43,17 @@ class OperationDefinition
      * OperationDefinition constructor.
      * @param string $type
      * @param string $name
-     * @param array $selectionSet
+     * @param SelectionSet|null $selectionSet
      * @param array $variables
      * @param array $directives
      */
     public function __construct(
-        string $type, string $name = '', array $selectionSet = [], array $variables = [], array $directives = []
+        string $type, string $name = '', SelectionSet $selectionSet = null, array $variables = [], array $directives = []
     )
     {
         $this->type = $type;
         $this->name = $name;
-        $this->selectionSet = $selectionSet;
+        $this->selectionSet = $selectionSet ?? new SelectionSet();
         $this->variables = $variables;
         $this->directives = $directives;
     }

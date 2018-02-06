@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of PhpStorm package.
+ * This file is part of GraphQLQuery package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -14,121 +14,6 @@ namespace Stenin\GraphQLQuery;
  */
 abstract class AbstractParser
 {
-    protected $_tokens = [
-        'T_QUERY' => [
-            'query\\b',
-            true,
-        ],
-        'T_MUTATION' => [
-            'mutation\\b',
-            true,
-        ],
-        'T_SUBSCRIPTION' => [
-            'subscription\\b',
-            true,
-        ],
-        'T_FRAGMENT' => [
-            'fragment\\b',
-            true,
-        ],
-        'T_NON_NULL' => [
-            '!',
-            true,
-        ],
-        'T_VAR' => [
-            '\\$',
-            true,
-        ],
-        'T_PARENTHESIS_OPEN' => [
-            '\\(',
-            true,
-        ],
-        'T_PARENTHESIS_CLOSE' => [
-            '\\)',
-            true,
-        ],
-        'T_THREE_DOTS' => [
-            '\\.\\.\\.',
-            true,
-        ],
-        'T_COLON' => [
-            ':',
-            true,
-        ],
-        'T_EQUAL' => [
-            '=',
-            true,
-        ],
-        'T_DIRECTIVE_AT' => [
-            '@',
-            true,
-        ],
-        'T_BRACKET_OPEN' => [
-            '\\[',
-            true,
-        ],
-        'T_BRACKET_CLOSE' => [
-            '\\]',
-            true,
-        ],
-        'T_BRACE_OPEN' => [
-            '{',
-            true,
-        ],
-        'T_BRACE_CLOSE' => [
-            '}',
-            true,
-        ],
-        'T_ON' => [
-            'on\\b',
-            true,
-        ],
-        'T_NUMBER_VALUE' => [
-            '\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][\\+\\-]?[0-9]+)?\\b',
-            true,
-        ],
-        'T_BOOL_TRUE' => [
-            'true\\b',
-            true,
-        ],
-        'T_BOOL_FALSE' => [
-            'false\\b',
-            true,
-        ],
-        'T_NULL' => [
-            'null\\b',
-            true,
-        ],
-        'T_MULTILINE_STRING' => [
-            '"""(?:\\\\"""|(?!""").|\\s)+"""',
-            true,
-        ],
-        'T_STRING' => [
-            '"[^"\\\\]+(\\\\.[^"\\\\]*)*"',
-            true,
-        ],
-        'T_DIRECTIVE' => [
-            'directive\\b',
-            true,
-        ],
-        'T_NAME' => [
-            '([_A-Za-z][_0-9A-Za-z]*)',
-            true,
-        ],
-        'T_WHITESPACE' => [
-            '[\\xfe\\xff|\\x20|\\x09|\\x0a|\\x0d]+',
-            false,
-        ],
-        'T_COMMENT' => [
-            '#[^\\n]*',
-            false,
-        ],
-        'T_COMMA' => [
-            ',',
-            false,
-        ],
-    ];
-
     /**
      * @var int
      */
@@ -260,26 +145,6 @@ abstract class AbstractParser
     protected $semStack;
 
     /**
-     * @var array
-     */
-    protected $startAttributeStack;
-
-    /**
-     * @var array
-     */
-    protected $endAttributeStack;
-
-    /**
-     * @var array
-     */
-    protected $endAttributes;
-
-    /**
-     * @var array
-     */
-    protected $lookaheadStartAttributes;
-
-    /**
      * @var int
      */
     protected $errorState;
@@ -333,77 +198,82 @@ abstract class AbstractParser
      */
     protected function doParse()
     {
-        $this->semStack = [];
-        $stateStack = [];
-
+        $symbol = self::SYMBOL_NONE;
         $state = 0;
-        $symbol = -1;
-
         $stackPos = 0;
-        $stateStack[$stackPos] = 0;
+
+        $stateStack = [$state];
+        $this->semStack = [];
+
         $this->errorState = 0;
 
-        while (true) {
+        for (;;) {
             $this->traceNewState($state, $symbol);
-            if ($this->actionBase[$state] == 0) {
+            if ($this->actionBase[$state] === 0) {
                 $rule = $this->actionDefault[$state];
             } else {
-                if ($symbol < 0) {
-                    if (($symbol = $this->lex()) <= 0) {
-                        $symbol = 0;
+                if ($symbol === self::SYMBOL_NONE) {
+                    $tokenId = $this->lex();
+
+                    $symbol = $tokenId >= 0 && $tokenId < $this->tokenToSymbolMapSize
+                        ? $this->tokenToSymbol[$tokenId]
+                        : $this->invalidSymbol;
+
+                    if ($symbol === $this->invalidSymbol) {
+                        throw new \RangeException(sprintf(
+                            'The lexer returned an invalid token (id=%d, value=%s)',
+                            $tokenId, $this->tokenValue
+                        ));
                     }
-                    $symbol = $symbol < $this->tokenToSymbolMapSize ? $this->tokenToSymbol[$symbol] : $this->invalidSymbol;
+
                     $this->traceRead($symbol);
                 }
 
-                if ((($rule = $this->actionBase[$state] + $symbol) >= 0 && $rule < $this->actionTableSize && $this->actionCheck[$rule] == $symbol || ($state < $this->YY2TBLSTATE && ($rule = $this->actionBase[$state + $this->numNonLeafStates] + $symbol) >= 0 && $rule < $this->actionTableSize && $this->actionCheck[$rule] == $symbol)) && ($rule = $this->action[$rule]) != $this->defaultAction) {
-                    /*
-                     * >= YYNLSTATE: shift and reduce
-                     * > 0: shift
-                     * = 0: accept
-                     * < 0: reduce
-                     * = -$this->unexpectedTokenRule: error
-                     */
-                    if ($rule > 0) {
-                        /* shift */
+                $idx = $this->actionBase[$state] + $symbol;
+                if ((($idx >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol)
+                        || ($state < $this->YY2TBLSTATE
+                            && ($idx = $this->actionBase[$state + $this->numNonLeafStates] + $symbol) >= 0
+                            && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol))
+                    && ($action = $this->action[$idx]) !== $this->defaultAction) {
+
+                    if ($action > 0) {
                         $this->traceShift($symbol);
 
                         ++$stackPos;
-                        $stateStack[$stackPos] = $state = $rule;
+                        $stateStack[$stackPos] = $state = $action;
                         $this->semStack[$stackPos] = $this->tokenValue;
 
                         $symbol = self::SYMBOL_NONE;
 
-                        if ($this->errorState > 0) {
-                            $this->errorState--;
+                        if ($this->errorState) {
+                            --$this->errorState;
                         }
 
-                        if ($rule < $this->numNonLeafStates) {
+                        if ($action < $this->numNonLeafStates) {
                             continue;
                         }
 
-                        /* $rule >= $this->numNonLeafStates means shift-and-reduce */
-                        $rule -= $this->numNonLeafStates;
+                        $rule = $action - $this->numNonLeafStates;
                     } else {
-                        $rule = -$rule;
+                        $rule = -$action;
                     }
                 } else {
                     $rule = $this->actionDefault[$state];
                 }
             }
-
-            while (true) {
-                /* reduce/error */
-                if ($rule == 0) {
-                    /* accept */
+            for (;;) {
+                if ($rule === 0) {
                     $this->traceAccept();
                     return $this->semValue;
-                } else if ($rule != $this->unexpectedTokenRule) {
-                    /* reduce */
+                } elseif ($rule !== $this->unexpectedTokenRule) {
                     $this->traceReduce($rule);
-                    $this->reduceCallbacks[$rule]($stackPos);
 
-                    /* Goto - shift nonterminal */
+                    try {
+                        $this->reduceCallbacks[$rule]($stackPos);
+                    } catch (\Exception $e) {
+                        throw $e;
+                    }
+
                     $stackPos -= $this->ruleToLength[$rule];
                     $nonTerminal = $this->ruleToNonTerminal[$rule];
                     $idx = $this->gotoBase[$nonTerminal] + $stateStack[$stackPos];
@@ -415,56 +285,101 @@ abstract class AbstractParser
                     }
 
                     ++$stackPos;
-                    $stateStack[$stackPos] = $state;
+                    $stateStack[$stackPos]     = $state;
                     $this->semStack[$stackPos] = $this->semValue;
                 } else {
-                    /* error */
-                    if ($this->errorState === 0) {
-                        throw new \Exception("syntax error");
-                    }
-
                     switch ($this->errorState) {
+                        case 0:
+                            throw new \Exception($this->getErrorMessage($symbol, $state));
+                            // Break missing intentionally
                         case 1:
                         case 2:
                             $this->errorState = 3;
-                            /* Pop until error-expecting state uncovered */
 
-                            while (!(($rule = $this->actionBase[$state] + $this->errorSymbol) >= 0
-                                && $rule < $this->actionTableSize && $this->actionCheck[$rule] == $this->errorSymbol
-                                || ($state < $this->YY2TBLSTATE
-                                    && ($rule = $this->actionBase[$state + $this->numNonLeafStates] + $this->errorSymbol) >= 0
-                                    && $rule < $this->actionTableSize && $this->actionCheck[$rule] == $this->errorSymbol))) {
+                            while (!(
+                                    (($idx = $this->actionBase[$state] + $this->errorSymbol) >= 0
+                                        && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $this->errorSymbol)
+                                    || ($state < $this->YY2TBLSTATE
+                                        && ($idx = $this->actionBase[$state + $this->numNonLeafStates] + $this->errorSymbol) >= 0
+                                        && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $this->errorSymbol)
+                                ) || ($action = $this->action[$idx]) === $this->defaultAction) {
                                 if ($stackPos <= 0) {
-                                    return 1;
+                                    return null;
                                 }
                                 $state = $stateStack[--$stackPos];
                                 $this->tracePop($state);
                             }
-                            $rule = $this->action[$rule];
                             $this->traceShift($this->errorSymbol);
-                            $stateStack[++$stackPos] = $state = $rule;
+                            ++$stackPos;
+                            $stateStack[$stackPos] = $state = $action;
                             break;
-
                         case 3:
-                            $this->traceDiscard($symbol);
-                            if ($symbol == 0) {
-                                return 1;
+                            if ($symbol === 0) {
+                                return null;
                             }
-                            $symbol = -1;
-                            break;
+                            $this->traceDiscard($symbol);
+                            $symbol = self::SYMBOL_NONE;
+                            break 2;
                     }
                 }
-
                 if ($state < $this->numNonLeafStates) {
                     break;
                 }
 
-                /* >= $this->numNonLeafStates means shift-and-reduce */
                 $rule = $state - $this->numNonLeafStates;
             }
         }
 
         throw new \RuntimeException('Reached end of parser loop');
+    }
+
+    /**
+     * @param int $symbol
+     * @param int $state
+     * @return string
+     */
+    private function getErrorMessage(int $symbol, int $state) : string
+    {
+        $expectedString = '';
+
+        if ($expected = $this->getExpectedTokens($state)) {
+            $expectedString = ', expecting ' . \implode(' or ', $expected);
+        }
+
+        return 'Syntax error, unexpected ' . $this->symbolToName[$symbol] . $expectedString;
+    }
+
+    /**
+     * @param int $state
+     * @return string[]
+     */
+    private function getExpectedTokens(int $state) : array
+    {
+        $expected = [];
+        $base = $this->actionBase[$state];
+
+        foreach ($this->symbolToName as $symbol => $name) {
+            $idx = $base + $symbol;
+
+            if ($idx >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol
+                || $state < $this->YY2TBLSTATE
+                && ($idx = $this->actionBase[$state + $this->numNonLeafStates] + $symbol) >= 0
+                && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol
+            ) {
+                if ($this->action[$idx] !== $this->unexpectedTokenRule
+                    && $this->action[$idx] !== $this->defaultAction
+                    && $symbol !== $this->errorSymbol
+                ) {
+                    if (\count($expected) === 4) {
+                        return [];
+                    }
+
+                    $expected[] = $name;
+                }
+            }
+        }
+
+        return $expected;
     }
 
     /*

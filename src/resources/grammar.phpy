@@ -62,11 +62,11 @@ OperationType
  */
 
 SelectionSet
-    : T_BRACE_OPEN SelectionList T_BRACE_CLOSE { $$ = $2; }
+    : T_BRACE_OPEN SelectionList T_BRACE_CLOSE { $$ = \count($2) ? new SelectionSet($2) : null; }
     ;
 
 SelectionSetOpt
-    : { $$ = []; }
+    : { $$ = null; }
     | SelectionSet
     ;
 

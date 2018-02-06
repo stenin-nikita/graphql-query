@@ -2,15 +2,25 @@
     "name": "stenin-nikita/graphql-query",
     "description": "GraphQL query parser based on Yacc",
     "type": "library",
-    "require": {
-        "railt/compiler": "^1.1"
-    },
-    "license": "MIT",
     "authors": [
         {
             "name": "Nikita Stenin",
             "email": "stenin.nikita@gmail.com"
         }
     ],
+    "require": {
+        "railt/compiler": "^1.1",
+        "stenin-nikita/php-yacc": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Stenin\\GraphQLQuery\\": "src/"
+        }
+    },
+    "license": "MIT",
+    "config": {
+        "sort-packages": true
+    },
+    "prefer-stable": true,
     "minimum-stability": "dev"
 }

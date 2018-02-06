@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of Stenin/GraphQL package.
+ * This file is part of GraphQLQuery package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -10,15 +10,16 @@ declare(strict_types=1);
 namespace Stenin\GraphQLQuery;
 
 use Railt\Compiler\Lexer;
-use Stenin\GraphQLQuery\Ast\Document;
-use Stenin\GraphQLQuery\Ast\OperationDefinition;
-use Stenin\GraphQLQuery\Ast\Field;
 use Stenin\GraphQLQuery\Ast\Argument;
 use Stenin\GraphQLQuery\Ast\Directive;
-use Stenin\GraphQLQuery\Ast\Variable;
+use Stenin\GraphQLQuery\Ast\Document;
+use Stenin\GraphQLQuery\Ast\Field;
 use Stenin\GraphQLQuery\Ast\FragmentDefinition;
 use Stenin\GraphQLQuery\Ast\FragmentSpread;
 use Stenin\GraphQLQuery\Ast\InlineFragment;
+use Stenin\GraphQLQuery\Ast\OperationDefinition;
+use Stenin\GraphQLQuery\Ast\SelectionSet;
+use Stenin\GraphQLQuery\Ast\Variable;
 
 
 /**
@@ -108,7 +109,7 @@ class QueryParser extends AbstractParser
         "T_MULTILINE_STRING",
         "T_STRING",
         "T_NAME"
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -143,7 +144,7 @@ class QueryParser extends AbstractParser
             5,    6,    7,    8,    9,   10,   11,   12,   13,   14,
            15,   16,   17,   18,   19,   20,   21,   22,   23,   24,
            25
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -154,7 +155,7 @@ class QueryParser extends AbstractParser
           128,   80,    2,   46,   49,   69,  -75,  133,    4,    7,
            79,    0,    3,    0,   31,    0,    8,    0,  126,  108,
             0,   44,    0,  111
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -165,7 +166,7 @@ class QueryParser extends AbstractParser
             7,   10,   12,    9,    9,   18,   17,   25,   12,   12,
            12,   -1,   13,   -1,   14,   -1,   15,   -1,   16,   16,
            -1,   17,   -1,   18
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -179,7 +180,7 @@ class QueryParser extends AbstractParser
             0,    0,    0,    0,    0,   -8,    0,    0,    0,   24,
             2,    2,    2,   24,    2,   24,   24,   15,   24,   24,
             0,   24,    2,    2
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -191,7 +192,7 @@ class QueryParser extends AbstractParser
         32767,32767,   32,32767,   66,   43,32767,   77,32767,32767,
            68,   69,32767,32767,   18,   76,   63,   76,   76,   29,
            76,   76,   55,   58
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -202,7 +203,7 @@ class QueryParser extends AbstractParser
            37,   24,   61,    0,   30,   25,   62,  115,    0,  107,
             0,   91,   87,   45,   88,    0,    0,   63,   14,    0,
            32,   17,    0,   11,   12,   64,    0,   65
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -213,7 +214,7 @@ class QueryParser extends AbstractParser
            46,   18,    7,   -1,   11,   18,    7,   18,   -1,   18,
            -1,    7,    7,   27,    7,   -1,   -1,    7,   20,   -1,
            20,   20,   -1,   20,   20,    7,   -1,    7
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -224,7 +225,7 @@ class QueryParser extends AbstractParser
            -7,    0,    0,    0,    0,    3,   -3,    7,   -4,   -2,
             0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
             0,    0,    2,    0,    0,    0,   -9
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -235,7 +236,7 @@ class QueryParser extends AbstractParser
            29,   27,   82,   18,   84,  110,   47,   48,   40,   92,
            93,   94,   95,   96,   35,   98,   99,    1,   19,  113,
            16,  118,   34,  119,   41,  124,  131
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -250,7 +251,7 @@ class QueryParser extends AbstractParser
            39,   29,   10,   40,   40,   41,   43,   43,   42,   42,
            42,   28,   44,   45,   45,   11,   20,   20,   46,   18,
             9,    9
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -265,7 +266,7 @@ class QueryParser extends AbstractParser
             3,    2,    3,    0,    2,    4,    0,    2,    1,    1,
             1,    1,    3,    2,    2,    2,    0,    2,    3,    1,
             0,    1
-/* YY:29 */    ];
+/* YY:30 */    ];
 
     /**
      * @var array
@@ -353,7 +354,7 @@ class QueryParser extends AbstractParser
         "Name : T_NAME",
         "NameOpt : /* empty */",
         "NameOpt : Name"
-/* YY:29 */    );
+/* YY:30 */    );
 
     /**
      * @var array
@@ -384,17 +385,7 @@ class QueryParser extends AbstractParser
         'T_MULTILINE_STRING' => 278,
         'T_STRING' => 279,
         'T_NAME' => 280,
-/* YY:30 */    ];
-
-    /**
-     * @var bool
-     */
-    protected $init = false;
-
-    /**
-     * @var Lexer
-     */
-    protected $lexer;
+/* YY:31 */    ];
 
     /**
      * @return void
@@ -447,10 +438,10 @@ class QueryParser extends AbstractParser
                 $this->semValue = $this->semStack[$stackPos];
             },
             15 => function ($stackPos) {
-/* YY:65 */                 $this->semValue = $this->semStack[$stackPos-(3-2)]; 
+/* YY:65 */                 $this->semValue = \count($this->semStack[$stackPos-(3-2)]) ? new SelectionSet($this->semStack[$stackPos-(3-2)]) : null; 
             },
             16 => function ($stackPos) {
-/* YY:69 */                 $this->semValue = []; 
+/* YY:69 */                 $this->semValue = null; 
             },
             17 => function ($stackPos) {
                 $this->semValue = $this->semStack[$stackPos];
@@ -647,10 +638,13 @@ class QueryParser extends AbstractParser
             81 => function ($stackPos) {
 /* YY:286 */                 $this->semValue = $this->semStack[$stackPos-(1-1)]; 
             },
-/* YY:31 */        ];
+/* YY:32 */        ];
     }
 
-    private $currentToken;
+    /**
+     * @var \Generator
+     */
+    private $generator;
 
     /**
      * @return int
@@ -658,27 +652,25 @@ class QueryParser extends AbstractParser
      */
     protected function lex(): int
     {
-        if (! $this->init) {
-            $this->init = true;
-            $lexer = new \Railt\Compiler\Lexer($this->code, $this->_tokens);
-            $this->lexer = $lexer->getIterator();
+        if (! $this->generator) {
+            $this->generator = (new Lexer($this->code, Token::LIST))->getIterator();
         }
 
-        $current = $this->currentToken = $this->lexer->current();
+        $current = $this->generator->current();
 
         if (isset($this->tokens[$current['token']])) {
             $this->tokenValue = $current['value'];
-            $ret = $this->tokens[$current['token']];
+            $tokenId = $this->tokens[$current['token']];
         } elseif ($current['token'] === 'EOF') {
             $this->tokenValue = "\0";
-            $ret = 0;
+            $tokenId = 0;
         } else {
-            throw new \Exception('Unexpected token');
+            throw new \Exception(\sprintf('Unexpected token: "%s"', $current['value']));
         }
 
-        $this->lexer->next();
+        $this->generator->next();
 
-        return $ret;
+        return $tokenId;
     }
 }
-/* YY:31 */
+/* YY:32 */

@@ -44,11 +44,11 @@ class Field
      * @param string $name
      * @param array $arguments
      * @param array $directives
-     * @param array $selectionSet
+     * @param SelectionSet|null $selectionSet
      * @param string|null $alias
      */
     public function __construct(
-        string $name, array $arguments = [], array $directives = [], array $selectionSet = [], string $alias = null
+        string $name, array $arguments = [], array $directives = [], SelectionSet $selectionSet = null, string $alias = null
     )
     {
         $this->name = $name;

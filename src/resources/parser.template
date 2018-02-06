@@ -5,7 +5,7 @@ $meta #
 #semval(%n) $this->semStack[$stackPos-(%l-%n)]
 #semval(%n,%t) $this->semStack[$stackPos-(%l-%n)]
 /**
- * This file is part of Stenin/GraphQL package.
+ * This file is part of GraphQLQuery package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,15 +15,16 @@ declare(strict_types=1);
 namespace Stenin\GraphQLQuery;
 
 use Railt\Compiler\Lexer;
-use Stenin\GraphQLQuery\Ast\Document;
-use Stenin\GraphQLQuery\Ast\OperationDefinition;
-use Stenin\GraphQLQuery\Ast\Field;
 use Stenin\GraphQLQuery\Ast\Argument;
 use Stenin\GraphQLQuery\Ast\Directive;
-use Stenin\GraphQLQuery\Ast\Variable;
+use Stenin\GraphQLQuery\Ast\Document;
+use Stenin\GraphQLQuery\Ast\Field;
 use Stenin\GraphQLQuery\Ast\FragmentDefinition;
 use Stenin\GraphQLQuery\Ast\FragmentSpread;
 use Stenin\GraphQLQuery\Ast\InlineFragment;
+use Stenin\GraphQLQuery\Ast\OperationDefinition;
+use Stenin\GraphQLQuery\Ast\SelectionSet;
+use Stenin\GraphQLQuery\Ast\Variable;
 
 #include;
 
@@ -185,16 +186,6 @@ class #(-p) extends AbstractParser
     ];
 
     /**
-     * @var bool
-     */
-    protected $init = false;
-
-    /**
-     * @var Lexer
-     */
-    protected $lexer;
-
-    /**
      * @return void
      */
     protected function initReduceCallbacks() {
@@ -211,7 +202,10 @@ class #(-p) extends AbstractParser
         ];
     }
 
-    private $currentToken;
+    /**
+     * @var \Generator
+     */
+    private $generator;
 
     /**
      * @return int
@@ -219,27 +213,25 @@ class #(-p) extends AbstractParser
      */
     protected function lex(): int
     {
-        if (! $this->init) {
-            $this->init = true;
-            $lexer = new \Railt\Compiler\Lexer($this->code, $this->_tokens);
-            $this->lexer = $lexer->getIterator();
+        if (! $this->generator) {
+            $this->generator = (new Lexer($this->code, Token::LIST))->getIterator();
         }
 
-        $current = $this->currentToken = $this->lexer->current();
+        $current = $this->generator->current();
 
         if (isset($this->tokens[$current['token']])) {
             $this->tokenValue = $current['value'];
-            $ret = $this->tokens[$current['token']];
+            $tokenId = $this->tokens[$current['token']];
         } elseif ($current['token'] === 'EOF') {
             $this->tokenValue = "\0";
-            $ret = 0;
+            $tokenId = 0;
         } else {
-            throw new \Exception('Unexpected token');
+            throw new \Exception(\sprintf('Unexpected token: "%s"', $current['value']));
         }
 
-        $this->lexer->next();
+        $this->generator->next();
 
-        return $ret;
+        return $tokenId;
     }
 }
 #tailcode;
