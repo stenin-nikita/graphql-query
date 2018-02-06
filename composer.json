@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "railt/compiler": "^1.1",
+        "railt/compiler": "dev-master@dev",
         "stenin-nikita/php-yacc": "dev-master"
     },
     "autoload": {
